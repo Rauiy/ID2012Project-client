@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+                android:id="@+id/nav_gallery"
+                android:icon="@drawable/ic_menu_gallery"
+                android:title="Gallery"/>
+        <item
+                android:id="@+id/nav_camera"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="Camera"/>
+
+        <item android:title="Servers">
+            <menu>
+                <group android:checkableBehavior="single">
+                    <item
+                            android:id="@+id/server1"
+                            android:icon="@android:drawable/ic_menu_manage"
+                            android:title="localhost"/>
+                    <item
+                            android:id="@+id/server2"
+                            android:icon="@android:drawable/ic_menu_manage"
+                            android:title="192.168.1.10"/>
+                    <item
+                            android:id="@+id/server3"
+                            android:icon="@android:drawable/ic_menu_manage"
+                            android:title="steven.ly@asuscomm.com"/>
+                </group>
+            </menu>
+        </item>
+    </group>
+</menu>
