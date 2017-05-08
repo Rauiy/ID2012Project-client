@@ -1,15 +1,25 @@
 package com.example.steve_000.clientapplication;
 
+import android.*;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Base64;
 import android.util.Log;
 import android.view.*;
@@ -20,15 +30,22 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.*;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.*;
+import java.text.BreakIterator;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     static final int REQUEST_IMAGE_CAPTURE = 0;
     static final int REQUEST_IMAGE_GALLERY = 1;
     private GoogleApiClient mGoogleApiClient;
@@ -101,14 +118,25 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+
         // Create an instance of GoogleAPIClient.
-        /*if (mGoogleApiClient == null) {
+        if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
                     .build();
-        }*/
+        }
+    }
+
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
     }
 
     @Override
@@ -148,7 +176,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
 
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.nav_camera:
                 camera();
                 break;
@@ -164,23 +192,24 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void send(final View view){
+    public void send(final View view) {
         final ImageView iv = (ImageView) this.findViewById(R.id.imageView);
+        final EditText tv = (EditText) this.findViewById(R.id.location_text);
         Drawable img = iv.getDrawable();
-        if(img == null) {
+        if (img == null) {
             Snackbar.make(view, "No image to send", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
             return;
         }
-        final Bitmap bmp = ((BitmapDrawable)img).getBitmap();
+        final Bitmap bmp = ((BitmapDrawable) img).getBitmap();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 ConnectionHandler ch = new ConnectionHandler();
                 JSONObject jo = new JSONObject();
                 Bitmap scaled = bmp;
-                if(bmp.getWidth() > 600){
-                    int nh = (int) ( bmp.getHeight() * (512.0 / bmp.getWidth()) );
+                if (bmp.getWidth() > 600) {
+                    int nh = (int) (bmp.getHeight() * (512.0 / bmp.getWidth()));
                     scaled = Bitmap.createScaledBitmap(bmp, 512, nh, true);
                 }
 
@@ -190,7 +219,7 @@ public class MainActivity extends AppCompatActivity
                 StringBuilder sb = new StringBuilder();
                 int size = 6;
 
-                for(int offset = 0; offset + size < imgbt.length; offset+= size){
+                for (int offset = 0; offset + size < imgbt.length; offset += size) {
                     String prt = Base64.encodeToString(imgbt, offset, size, Base64.DEFAULT);
                     sb.append(prt);
                 }
@@ -200,16 +229,20 @@ public class MainActivity extends AppCompatActivity
                 //OutputStream out = new Base64OutputStream(outputStream, Base64.DEFAULT);
 
                 try {
-                    jo.put("user","tester");
-                    jo.put("password","");
+                    jo.put("user", "tester");
+                    jo.put("password", "");
                     jo.put("type", "request");
                     jo.put("key", "analyze");
                     jo.put("image", img);
+                    if(tv.getText().equals(""))
+                        jo.put("location", "Unkown location");
+                    else
+                        jo.put("location", tv.getText().toString());
 
                     jo = ch.request(jo.toString());
 
-                    Log.d("ConnectionHandlerThread", "response="+jo.toString());
-                    if(jo.getString("status").equals("success")){
+                    Log.d("ConnectionHandlerThread", "response=" + jo.toString());
+                    if (jo.getString("status").equals("success")) {
                         Snackbar.make(view, "Response received", Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
 
@@ -219,7 +252,7 @@ public class MainActivity extends AppCompatActivity
                             e.printStackTrace();
                             Log.e("ConnectionHandlerThread", "JSON failure");
                         }
-                    }else{
+                    } else {
                         Snackbar.make(view, "No response", Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
                     }
@@ -227,8 +260,6 @@ public class MainActivity extends AppCompatActivity
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-
 
 
             }
@@ -248,18 +279,73 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void camera(){
+    public void camera() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
 
     }
 
-    public void getPosition(View view){
-
+    public void getPosition(View view) {
+        if (!connected) {
+            Snackbar.make(view, "Not connected to google services", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return;
+        }
+        switch (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            case PackageManager.PERMISSION_DENIED:
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                        1);
+                break;
+            default:
+                Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                        mGoogleApiClient);
+                if(mLastLocation == null){
+                    Snackbar.make(findViewById(R.id.position_button), "No last known location", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    return;
+                }
+                getGeocode(mLastLocation);
+                break;
+        }
     }
 
-    public void handleResponse(JSONObject res, View view) throws JSONException{
-        switch (res.getString("status")){
+    public void getGeocode(Location mLastLocation) {
+        Geocoder geocoder;
+        List<Address> addresses = null;
+        geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            addresses = geocoder.getFromLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (addresses == null)
+            return;
+
+         String state = addresses.get(0).getAdminArea();
+         String country = addresses.get(0).getCountryName();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(state);
+        sb.append(", " + country);
+
+        final String outputtxt = sb.toString();
+
+        final EditText tv = (EditText)findViewById(R.id.location_text);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tv.setText(outputtxt);
+            }
+        });
+    }
+
+
+    public void handleResponse(JSONObject res, View view) throws JSONException {
+        switch (res.getString("status")) {
             case "none":
                 Snackbar.make(view, "No birds found", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
@@ -288,7 +374,7 @@ public class MainActivity extends AppCompatActivity
         if (resultCode == RESULT_OK && null != data) {
             final ImageView iv = (ImageView) this.findViewById(R.id.imageView);
             final Uri uri;
-            switch (requestCode){
+            switch (requestCode) {
                 case REQUEST_IMAGE_GALLERY:
 
                     uri = data.getData();
@@ -312,7 +398,8 @@ public class MainActivity extends AppCompatActivity
                         }
                     });
                     break;
-                default: return;
+                default:
+                    return;
             }
 
         }
@@ -344,9 +431,9 @@ public class MainActivity extends AppCompatActivity
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private void toogle(LinearLayout view){
+    private void toogle(LinearLayout view) {
 
-        switch (view.getVisibility()){
+        switch (view.getVisibility()) {
             case View.VISIBLE:
                 view.setVisibility(View.INVISIBLE);
                 break;
@@ -356,5 +443,54 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private boolean connected = false;
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        connected = true;
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    if ( ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        Log.d("WTF", "WTF");
+                        return;
+                    }
+                    Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                            mGoogleApiClient);
+                    if(mLastLocation == null) {
+                        Snackbar.make(findViewById(R.id.position_button), "No last known location", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                    }
+                    getGeocode(mLastLocation);
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
 }
 
