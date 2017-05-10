@@ -49,11 +49,16 @@ public class MainActivity extends AppCompatActivity
     static final int REQUEST_IMAGE_CAPTURE = 0;
     static final int REQUEST_IMAGE_GALLERY = 1;
     private GoogleApiClient mGoogleApiClient;
+    private static final String[] COUNTRIES = new String[] {
+            "Sverige", "Danmark", "Finland", "Norge"
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -61,7 +66,9 @@ public class MainActivity extends AppCompatActivity
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                send(view);
+                EditText et = (EditText)findViewById(R.id.host);
+                String host = et.getText().toString();
+                send(view, host);
             }
         });
 
@@ -108,6 +115,22 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        Button connect = (Button) findViewById(R.id.connect_button);
+        connect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toogle(findViewById(R.id.connect_window));
+            }
+        });
+
+        ImageView iv = (ImageView) findViewById(R.id.imageView);
+        iv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toogle(ll);
+            }
+        });
+
 
         final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -118,7 +141,6 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -127,6 +149,13 @@ public class MainActivity extends AppCompatActivity
                     .addApi(LocationServices.API)
                     .build();
         }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, COUNTRIES);
+        AutoCompleteTextView textView = (AutoCompleteTextView)
+                findViewById(R.id.location_text);
+        textView.setAdapter(adapter);
+
     }
 
     protected void onStart() {
@@ -142,8 +171,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        EditText et = (EditText) findViewById(R.id.location_text);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(et.isFocused()){
+            et.clearFocus();
         } else {
             super.onBackPressed();
         }
@@ -165,6 +197,7 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            toogle(findViewById(R.id.connect_window));
             return true;
         }
 
@@ -192,7 +225,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void send(final View view) {
+    public void send(final View view, final String host) {
         final ImageView iv = (ImageView) this.findViewById(R.id.imageView);
         final EditText tv = (EditText) this.findViewById(R.id.location_text);
         Drawable img = iv.getDrawable();
@@ -205,7 +238,12 @@ public class MainActivity extends AppCompatActivity
         new Thread(new Runnable() {
             @Override
             public void run() {
-                ConnectionHandler ch = new ConnectionHandler();
+                ConnectionHandler ch;
+                if(host.equals(""))
+                    ch = new ConnectionHandler();
+                else
+                    ch = new ConnectionHandler(host);
+
                 JSONObject jo = new JSONObject();
                 Bitmap scaled = bmp;
                 if (bmp.getWidth() > 600) {
@@ -333,7 +371,7 @@ public class MainActivity extends AppCompatActivity
 
         final String outputtxt = sb.toString();
 
-        final EditText tv = (EditText)findViewById(R.id.location_text);
+        final AutoCompleteTextView tv = (AutoCompleteTextView)findViewById(R.id.location_text);
 
         runOnUiThread(new Runnable() {
             @Override
@@ -431,7 +469,7 @@ public class MainActivity extends AppCompatActivity
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private void toogle(LinearLayout view) {
+    private void toogle(View view) {
 
         switch (view.getVisibility()) {
             case View.VISIBLE:

@@ -13,7 +13,8 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/app_bar_main"
-        tools:context="com.example.steve_000.clientapplication.MainActivity">
+        tools:context="com.example.steve_000.clientapplication.MainActivity"
+        android:focusableInTouchMode="true">
 
     <ImageView android:layout_width="match_parent"
                android:layout_height="match_parent"
@@ -28,7 +29,7 @@
                   android:layout_marginBottom="15dp"
                   android:orientation="horizontal"
                   android:layout_weight="5">
-        <EditText android:id="@+id/location_text"
+        <AutoCompleteTextView android:id="@+id/location_text"
                     android:layout_width="match_parent"
                   android:layout_height="match_parent"
                   android:layout_weight="1"

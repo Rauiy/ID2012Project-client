@@ -6,7 +6,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        tools:context="com.example.steve_000.clientapplication.MainActivity">
+        android:focusableInTouchMode="true"
+>
 
     <android.support.design.widget.AppBarLayout
                 android:layout_height="wrap_content"
@@ -20,17 +21,10 @@
                     android:background="?attr/colorPrimary"
                     app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
-        </android.support.design.widget.AppBarLayout>
+    </android.support.design.widget.AppBarLayout>
 
-        <include layout="@layout/content_main"/>
+    <include layout="@layout/content_main"/>
 
-    <android.support.design.widget.FloatingActionButton
-            android:id="@+id/add_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/fab_margin"
-            android:layout_gravity="bottom|center"
-            app:srcCompat="@drawable/ic_input_add"/>
 
     <android.support.design.widget.FloatingActionButton
             android:id="@+id/send_button"
@@ -41,20 +35,30 @@
             app:srcCompat="@drawable/ic_menu_send"/>
 
     <android.support.design.widget.FloatingActionButton
+            android:id="@+id/add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            android:layout_gravity="top|center"
+            app:layout_anchor="@id/send_button"
+            app:layout_anchorGravity="top|center"
+            app:srcCompat="@drawable/ic_input_add"/>
+
+    <android.support.design.widget.FloatingActionButton
             android:id="@+id/position_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
             android:layout_gravity="top|center"
-            app:layout_anchor="@id/send_button"
+            android:backgroundTint="#FFFFFFFF"
+            app:layout_anchor="@id/add_button"
             app:layout_anchorGravity="top|center"
             app:srcCompat="@drawable/ic_menu_mylocation"/>
 
     <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|center"
-            app:layout_anchor="@id/add_button"
-            app:layout_anchorGravity="top|center"
+            android:layout_gravity="bottom|center"
             android:id="@+id/popup_menu"
             android:visibility="invisible"
     >
@@ -73,6 +77,31 @@
                 app:srcCompat="@android:drawable/ic_menu_camera"/>
     </LinearLayout>
 
-
-
+    <LinearLayout
+            android:id="@+id/connect_window"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_anchor="@id/toolbar"
+            app:layout_anchorGravity="bottom|end"
+            android:background="@drawable/filled_frame"
+            android:visibility="invisible"
+    >
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="10dp"
+                android:id="@+id/host"
+                android:hint="IP or URL"
+        />
+        <Button android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:id="@+id/connect_button"
+                android:text="Connect"
+        />
+    </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

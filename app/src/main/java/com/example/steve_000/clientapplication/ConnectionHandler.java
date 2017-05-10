@@ -13,6 +13,7 @@ import java.net.Socket;
 public class ConnectionHandler{
     private final String host;
     private final int port;
+    private final String DEFAULT = "192.168.1.10";
     private Socket clientSocket;
     private BufferedReader reader;
     private BufferedWriter writer;
