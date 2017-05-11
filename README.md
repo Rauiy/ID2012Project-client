@@ -1,2 +1,2 @@
 # ClientApplication
-ubiquitous computing
+
